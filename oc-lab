@@ -411,7 +411,7 @@ generate_install_config() {
   local api_vip=$(grep 'api.'${cluster_name}'.'${base_domain} /etc/hosts | awk '{print $1}')
   local ingress_vip=$(grep 'ingress.'${cluster_name}'.'${base_domain} /etc/hosts | awk '{print $1}')
   local pull_secret=$(jq -c . $HOME/.docker/config.json)
-  local trust_bundle=$(cat ${SSL_CERT_DIR}/rootCA.pem)
+  local trust_bundle=$(cat ${SSL_CERT_DIR}/rootCA.pem | sed 's/^/  /')
   
   echo "apiVersion: v1"
   echo "baseDomain: ${base_domain}"
@@ -456,7 +456,7 @@ generate_install_config() {
   echo "    ingressVIPs:"
   echo "    - ${ingress_vip}"
   echo "fips: false"
-  echo "pullSecret: ${pull_secret}"
+  echo "pullSecret: '${pull_secret}'"
   echo "imageContentSources:"
   echo "- mirrors:"
   echo "  - quay.${cluster_name}.${base_domain}:8443/openshift/release"
