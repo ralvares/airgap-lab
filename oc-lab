@@ -264,7 +264,7 @@ create_cluster() {
   # Create master VMs
   for ((i=1; i<=3; i++)); do
     VM_NAME="master-${CLUSTER_NAME}-$(printf "%02d" ${i})"
-    create_vm ${VM_NAME} 8388608 2 ${CLUSTER_NAME}
+    create_vm ${VM_NAME} 16777216 4 ${CLUSTER_NAME}
   done
 
   # Create worker VMs 4194304
