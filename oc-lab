@@ -410,7 +410,6 @@ elif [ "${COMMAND}" == "attach" ]; then
 # Add new option parsing for --generate-agentconfig
 elif [ "${COMMAND}" == "generate-agentconfig" ]; then
   generate_agent_config
-fi
 else
   usage
 fi
