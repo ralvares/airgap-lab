@@ -9,6 +9,7 @@ usage() {
   echo "       --stop --name <name_of_cluster>"
   echo "       --attach --name <name_of_cluster> --iso <path_to_iso>"
   echo "       --generate-agentconfig --name <name_of_cluster>"
+  echo "       --generate-installconfig --name <name_of_cluster>"
   echo ""
   echo "Commands:"
   echo "  --create              Create a new cluster"
@@ -18,6 +19,7 @@ usage() {
   echo "  --stop                Stop all the VMs"
   echo "  --attach              Attach an ISO image to all the VMs"
   echo "  --generate-agentconfig Generate AgentConfig for the cluster"
+  echo "  --generate-installconfig Generate InstallConfig for the cluster"
   echo ""
   echo "Options:"
   echo "  --name, -n            Name of the cluster (required)"
@@ -58,6 +60,9 @@ while [[ "$#" -gt 0 ]]; do
       ;;
     --generate-agentconfig)
       COMMAND="generate-agentconfig"
+      ;;
+     --generate-installconfig)
+      COMMAND="generate-installconfig"
       ;;
     --name|-n)
       CLUSTER_NAME="$2"
@@ -395,6 +400,74 @@ generate_agent_config() {
   done
 }
 
+generate_install_config() {
+  if [ -z "$SSL_CERT_DIR" ]; then
+    echo "SSL_CERT_DIR is not set. Please set the SSL_CERT_DIR environment variable to the directory containing your Quay certificates."
+    exit 1
+  fi
+
+  local base_domain=${DOMAIN_NAME}
+  local cluster_name=${CLUSTER_NAME}
+  local api_vip=$(grep 'api.'${cluster_name}'.'${base_domain} /etc/hosts | awk '{print $1}')
+  local ingress_vip=$(grep 'ingress.'${cluster_name}'.'${base_domain} /etc/hosts | awk '{print $1}')
+  local pull_secret=$(jq -c . $HOME/.docker/config.json)
+  local trust_bundle=$(cat ${SSL_CERT_DIR}/rootCA.pem)
+  
+  echo "apiVersion: v1"
+  echo "baseDomain: ${base_domain}"
+  echo "metadata:"
+  echo "  name: ${cluster_name}"
+  echo "networking:"
+  echo "  clusterNetwork:"
+  echo "  - cidr: 10.128.0.0/14"
+  echo "    hostPrefix: 23"
+  echo "  machineNetwork:"
+  echo "  - cidr: 192.168.10.0/24"
+  echo "  networkType: OVNKubernetes"
+  echo "  serviceNetwork:"
+  echo "  - 172.30.0.0/16"
+  echo "compute:"
+  echo "  - architecture: amd64"
+  echo "    hyperthreading: Enabled"
+  echo "    name: worker"
+  echo "    replicas: ${WORKERS}"
+  echo "controlPlane:"
+  echo "  architecture: amd64"
+  echo "  hyperthreading: Enabled"
+  echo "  name: master"
+  echo "  replicas: 3"
+  echo "platform:"
+  echo "  baremetal:"
+  echo "    hosts:"
+  for i in {1..3}; do
+    local mac=$(virsh dumpxml master-${cluster_name}-$(printf "%02d" $i) | grep "mac address" | awk -F\' '{ print $2 }')
+    echo "    - name: master${i}"
+    echo "      role: master"
+    echo "      bootMACAddress: ${mac}"
+  done
+  for ((i=1; i<=WORKERS; i++)); do
+    local mac=$(virsh dumpxml worker-${cluster_name}-$(printf "%02d" $i) | grep "mac address" | awk -F\' '{ print $2 }')
+    echo "    - name: worker${i}"
+    echo "      role: worker"
+    echo "      bootMACAddress: ${mac}"
+  done
+  echo "    apiVIPs:"
+  echo "    - ${api_vip}"
+  echo "    ingressVIPs:"
+  echo "    - ${ingress_vip}"
+  echo "fips: false"
+  echo "pullSecret: ${pull_secret}"
+  echo "imageContentSources:"
+  echo "- mirrors:"
+  echo "  - quay.${cluster_name}.${base_domain}:8443/openshift/release"
+  echo "  source: quay.io/openshift-release-dev/ocp-v4.0-art-dev"
+  echo "- mirrors:"
+  echo "  - quay.${cluster_name}.${base_domain}:8443/openshift/release-images"
+  echo "  source: quay.io/openshift-release-dev/ocp-release"
+  echo "additionalTrustBundle: |"
+  echo "${trust_bundle}"
+}
+
 if [ "${COMMAND}" == "create" ]; then
   create_cluster
 elif [ "${COMMAND}" == "destroy" ]; then
@@ -410,6 +483,8 @@ elif [ "${COMMAND}" == "attach" ]; then
 # Add new option parsing for --generate-agentconfig
 elif [ "${COMMAND}" == "generate-agentconfig" ]; then
   generate_agent_config
+elif [ "${COMMAND}" == "generate-installconfig" ]; then
+  generate_install_config
 else
   usage
 fi
