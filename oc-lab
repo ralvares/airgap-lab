@@ -150,8 +150,8 @@ create_vm() {
   <vcpu>${VCPUS}</vcpu>
   <os>
     <type arch="x86_64" machine="q35">hvm</type>
-    <boot dev='cdrom'/>
     <boot dev="hd"/>
+    <boot dev='cdrom'/>
   </os>
   <features>
     <acpi/>
@@ -205,7 +205,7 @@ create_vm() {
 EOF
 
   # Define the VM using the XML file
-  virsh define ${VM_NAME}.xml &>/dev/null
+  virsh define ${VM_NAME}.xml &>/dev/null && rm ${VM_NAME}.xml
 }
 
 start_vms() {
