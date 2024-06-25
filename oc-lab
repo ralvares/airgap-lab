@@ -343,7 +343,7 @@ generate_agent_config() {
   echo "hosts:"
   # Generate master nodes configurations
   for i in {1..3}; do
-    local ip=$((20+i))
+    local ip=$((19+i))
     local mac=$(virsh dumpxml master-${CLUSTER_NAME}-$(printf "%02d" $i) | grep "mac address" | awk -F\' '{ print $2 }')
     echo "- hostname: master${i}"
     echo "  role: master"
@@ -376,7 +376,7 @@ generate_agent_config() {
 
   # Generate worker nodes configurations based on the WORKERS variable
   for ((i=1; i<=WORKERS; i++)); do
-    local ip=$((30+i))
+    local ip=$((29+i))
     local mac=$(virsh dumpxml worker-${CLUSTER_NAME}-$(printf "%02d" $i) | grep "mac address" | awk -F\' '{ print $2 }')
     echo "- hostname: worker${i}"
     echo "  role: worker"
