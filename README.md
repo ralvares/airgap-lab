@@ -7,7 +7,7 @@ This script provides a set of commands to create, destroy, manage, and monitor a
 Copy the script to the `/usr/local/bin/` directory and name it `oc-lab`:
 
 ```bash
-sudo cp lab.sh /usr/local/bin/oc-lab
+sudo cp oc-lab /usr/local/bin/oc-lab
 sudo chmod +x /usr/local/bin/oc-lab
 ```
 
