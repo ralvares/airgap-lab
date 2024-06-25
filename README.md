@@ -1,6 +1,6 @@
 # OpenShift Lab Management Tool - Hetzner
 
-This script provides a set of commands to create, destroy, manage, and monitor a cluster of virtual machines using `libvirt`. It is designed to be used as an OpenShift client plugin.
+This script provides a set of commands to create, destroy, manage, and monitor a cluster of virtual machines using `libvirt`. It is designed to be used as an OpenShift client plugin. This tool prepares the environment for an agent-based installation, including networking and VMs, but it does not install the OpenShift cluster.
 
 ## Installation
 
@@ -36,7 +36,7 @@ oc lab --command --name <name_of_cluster> [options]
 
 ## Examples
 
-### Creating the Lab
+### Preparing the Environment for Agent-Install
 
 1. **Create the Cluster**
 
@@ -90,4 +90,4 @@ To destroy a cluster named `ocp`:
 oc lab -n ocp --destroy
 ```
 
-This tool simplifies the management of your OpenShift lab environment, making it easy to create, manage, and destroy clusters with a single command.
+This tool simplifies the management of your OpenShift lab environment, making it easy to create, manage, and destroy clusters with a single command. It sets up the necessary infrastructure for an agent-based OpenShift installation but does not perform the installation itself.
