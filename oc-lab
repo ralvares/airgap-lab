@@ -149,7 +149,7 @@ create_vm() {
   local MAC1=$(generate_mac_address)
 
   # Create a disk image
-  qemu-img create -f qcow2 ${DISK_PATH} 20G &>/dev/null
+  qemu-img create -f qcow2 ${DISK_PATH} 120G &>/dev/null
 
   # Define the VM using a direct XML template
   cat <<EOF > ${VM_NAME}.xml
@@ -267,10 +267,10 @@ create_cluster() {
     create_vm ${VM_NAME} 8388608 2 ${CLUSTER_NAME}
   done
 
-  # Create worker VMs
+  # Create worker VMs 4194304
   for ((i=1; i<=WORKERS; i++)); do
     VM_NAME="worker-${CLUSTER_NAME}-$(printf "%02d" ${i})"
-    create_vm ${VM_NAME} 4194304 4 ${CLUSTER_NAME}
+    create_vm ${VM_NAME} 8388608 4 ${CLUSTER_NAME}
   done
 
   echo "Cluster Name: ${CLUSTER_NAME}"
