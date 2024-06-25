@@ -1,0 +1,331 @@
+#!/bin/bash
+
+# Function to display usage information
+usage() {
+  echo "Usage: $0 --create --name <name_of_cluster> [--workers <number_of_worker_nodes>] [--airgap]"
+  echo "       $0 --destroy --name <name_of_cluster>"
+  echo "       $0 --status --name <name_of_cluster>"
+  echo "       $0 --start --name <name_of_cluster>"
+  echo "       $0 --stop --name <name_of_cluster>"
+  echo "       $0 --attach --name <name_of_cluster> --iso <path_to_iso>"
+  echo ""
+  echo "Commands:"
+  echo "  --create              Create a new cluster"
+  echo "  --destroy             Destroy an existing cluster"
+  echo "  --status              Check the status of the VMs"
+  echo "  --start               Start all the VMs"
+  echo "  --stop                Stop all the VMs"
+  echo "  --attach              Attach an ISO image to all the VMs"
+  echo ""
+  echo "Options:"
+  echo "  --name, -n            Name of the cluster (required)"
+  echo "  --workers             Number of worker nodes (default is 2)"
+  echo "  --airgap              Disconnect the network from the internet (default is connected)"
+  echo "  --iso                 Path to the ISO image (required for --attach)"
+  exit 1
+}
+
+# Default values
+WORKERS=2
+AIRGAP="false"
+COMMAND=""
+CLUSTER_NAME=""
+ISO_PATH=""
+DOMAIN_NAME="superdemo.live"
+
+# Parse command-line arguments
+while [[ "$#" -gt 0 ]]; do
+  case "$1" in
+    --create)
+      COMMAND="create"
+      ;;
+    --destroy)
+      COMMAND="destroy"
+      ;;
+    --status)
+      COMMAND="status"
+      ;;
+    --start)
+      COMMAND="start"
+      ;;
+    --stop)
+      COMMAND="stop"
+      ;;
+    --attach)
+      COMMAND="attach"
+      ;;
+    --name|-n)
+      CLUSTER_NAME="$2"
+      shift
+      ;;
+    --domain|-d)
+      DOMAIN_NAME="$2"
+      shift
+      ;;
+    --workers)
+      WORKERS="$2"
+      shift
+      ;;
+    --airgap)
+      AIRGAP="true"
+      ;;
+    --iso)
+      ISO_PATH="$2"
+      shift
+      ;;
+    *)
+      usage
+      ;;
+  esac
+  shift
+done
+
+# Check for required arguments
+if [ -z "${COMMAND}" ] || [ -z "${CLUSTER_NAME}" ]; then
+  usage
+fi
+
+if [ "${COMMAND}" == "attach" ] && [ -z "${ISO_PATH}" ]; then
+  usage
+fi
+
+generate_network_xml() {
+  local cluster_name=$1
+  local domain=$2
+  local forward_mode="nat"
+
+  if [ "${AIRGAP}" == "true" ]; then
+    forward_mode="route"
+  fi
+
+  cat <<EOF
+<network xmlns:dnsmasq='http://libvirt.org/schemas/network/dnsmasq/1.0'>
+  <name>${cluster_name}</name>
+  <bridge name='${cluster_name}' stp='on' delay='0'/>
+  <forward mode='${forward_mode}'/>
+  <domain name='${domain}' localOnly='yes'/>
+  <dns>
+    <host ip='10.101.194.2'>
+      <hostname>quay.${cluster_name}.${domain}</hostname>
+    </host>
+    <host ip='10.101.194.20'>
+      <hostname>api.${cluster_name}.${domain}</hostname>
+    </host>
+  </dns>
+  <ip address='10.101.194.1' netmask='255.255.255.0'>
+    <dhcp>
+      <range start='10.101.194.100' end='10.101.194.200'/>
+    </dhcp>
+  </ip>
+  <ip address='10.101.194.2' netmask='255.255.255.0'/>
+  <ip address='10.101.194.3' netmask='255.255.255.0'/>
+  <dnsmasq:options>
+    <dnsmasq:option value='address=/.apps.${cluster_name}.${domain}/10.101.194.20'/>
+  </dnsmasq:options>
+</network>
+EOF
+}
+
+generate_mac_address() {
+  printf '52:54:00:%02x:%02x:%02x\n' $((RANDOM % 256)) $((RANDOM % 256)) $((RANDOM % 256))
+}
+
+create_vm() {
+  local VM_NAME=$1
+  local NET_NAME=$4
+  local DISK_PATH="/var/lib/libvirt/images/${VM_NAME}.qcow2"
+  local RAM=$2
+  local VCPUS=$3
+  local MAC1=$(generate_mac_address)
+
+  # Create a disk image
+  qemu-img create -f qcow2 ${DISK_PATH} 20G &>/dev/null
+
+  # Define the VM using a direct XML template
+  cat <<EOF > ${VM_NAME}.xml
+<domain type="kvm">
+  <name>${VM_NAME}</name>
+  <memory unit="KiB">${RAM}</memory>
+  <currentMemory unit="KiB">${RAM}</currentMemory>
+  <vcpu>${VCPUS}</vcpu>
+  <os>
+    <type arch="x86_64" machine="q35">hvm</type>
+    <boot dev='cdrom'/>
+    <boot dev="hd"/>
+  </os>
+  <features>
+    <acpi/>
+    <apic/>
+  </features>
+  <cpu mode="host-passthrough"/>
+  <clock offset="utc">
+    <timer name="rtc" tickpolicy="catchup"/>
+    <timer name="pit" tickpolicy="delay"/>
+    <timer name="hpet" present="no"/>
+  </clock>
+  <devices>
+    <emulator>/usr/libexec/qemu-kvm</emulator>
+    <disk type="file" device="disk">
+      <driver name="qemu" type="qcow2" discard="unmap"/>
+      <source file="${DISK_PATH}"/>
+      <target dev="sda" bus="scsi"/>
+    </disk>
+    <disk type='block' device='cdrom'>
+        <driver name='qemu' type='raw'/>
+        <target dev='hdd' bus='scsi' tray='open'/>
+        <readonly/>
+    </disk>
+    <controller type="usb" model="qemu-xhci" ports="15"/>
+    <controller type="scsi" model="virtio-scsi"/>
+    <controller type="pci" model="pcie-root"/>
+    <controller type="pci" model="pcie-root-port"/>
+    <interface type="bridge">
+      <source bridge="${NET_NAME}"/>
+      <mac address="${MAC1}"/>
+      <model type="virtio"/>
+    </interface>
+    <console type="pty">
+      <target type="serial"/>
+    </console>
+    <channel type="unix">
+      <source mode="bind"/>
+      <target type="virtio" name="org.qemu.guest_agent.0"/>
+    </channel>
+    <input type="tablet" bus="usb"/>
+    <graphics type="vnc" port="-1"/>
+    <video>
+      <model type="virtio"/>
+    </video>
+    <memballoon model="virtio"/>
+    <rng model="virtio">
+      <backend model="random">/dev/urandom</backend>
+    </rng>
+  </devices>
+</domain>
+EOF
+
+  # Define the VM using the XML file
+  virsh define ${VM_NAME}.xml &>/dev/null
+}
+
+start_vms() {
+  for VM in $(virsh list --all --name | grep "${CLUSTER_NAME}-"); do
+    virsh start ${VM} &>/dev/null
+  done
+  echo "All VMs in the cluster ${CLUSTER_NAME} have been started."
+}
+
+stop_vms() {
+  for VM in $(virsh list --all --name | grep "${CLUSTER_NAME}-"); do
+    virsh destroy ${VM} &>/dev/null
+  done
+  echo "All VMs in the cluster ${CLUSTER_NAME} have been stopped."
+}
+
+attach_iso() {
+  for VM in $(virsh list --all --name | grep "${CLUSTER_NAME}-"); do
+    virsh change-media ${VM} hdd ${ISO_PATH} --insert --config &>/dev/null
+  done
+  echo "ISO image ${ISO_PATH} has been attached to all VMs in the cluster ${CLUSTER_NAME}."
+}
+
+check_status() {
+  for VM in $(virsh list --all --name | grep "${CLUSTER_NAME}-"); do
+    STATUS=$(virsh domstate ${VM})
+    echo "${VM} is ${STATUS}"
+  done
+}
+
+create_cluster() {
+  # Generate and define the network XML
+  NETWORK_XML=$(generate_network_xml ${CLUSTER_NAME} ${DOMAIN_NAME})
+  echo "${NETWORK_XML}" | virsh net-define /dev/stdin &>/dev/null
+
+  # Start and autostart the network
+  virsh net-start ${CLUSTER_NAME} &>/dev/null
+  virsh net-autostart ${CLUSTER_NAME} &>/dev/null
+
+  # Validate the network is active
+  if ! virsh net-info ${CLUSTER_NAME} &>/dev/null; then
+    echo "Failed to create and start the network ${CLUSTER_NAME}."
+    exit 1
+  fi
+
+  # Create master VMs
+  for ((i=1; i<=3; i++)); do
+    VM_NAME="master-${CLUSTER_NAME}-$(printf "%02d" ${i})"
+    create_vm ${VM_NAME} 8388608 2 ${CLUSTER_NAME}
+  done
+
+  # Create worker VMs
+  for ((i=1; i<=WORKERS; i++)); do
+    VM_NAME="worker-${CLUSTER_NAME}-$(printf "%02d" ${i})"
+    create_vm ${VM_NAME} 4194304 4 ${CLUSTER_NAME}
+  done
+
+  echo "Cluster Name: ${CLUSTER_NAME}"
+  echo "Number of Worker VMs: ${WORKERS}"
+  echo "VMs:"
+
+  # Output VM details
+  for ((i=1; i<=3; i++)); do
+    VM_NAME="master-${CLUSTER_NAME}-$(printf "%02d" ${i})"
+    if virsh dominfo ${VM_NAME} &>/dev/null; then
+      MAC_ADDRESS=$(virsh dumpxml ${VM_NAME} | grep "mac address" | awk -F\' '{ print $2 }')
+      UUID=$(virsh dominfo ${VM_NAME} | grep 'UUID' | awk '{print $2}')
+      echo "  - Name: ${VM_NAME}, MAC Address: ${MAC_ADDRESS}, UUID: ${UUID}"
+    else
+      echo "  - Name: ${VM_NAME} creation failed."
+    fi
+  done
+
+  for ((i=1; i<=WORKERS; i++)); do
+    VM_NAME="worker-${CLUSTER_NAME}-$(printf "%02d" ${i})"
+    if virsh dominfo ${VM_NAME} &>/dev/null; then
+      MAC_ADDRESS=$(virsh dumpxml ${VM_NAME} | grep "mac address" | awk -F\' '{ print $2 }')
+      UUID=$(virsh dominfo ${VM_NAME} | grep 'UUID' | awk '{print $2}')
+      echo "  - Name: ${VM_NAME}, MAC Address: ${MAC_ADDRESS}, UUID: ${UUID}"
+    else
+      echo "  - Name: ${VM_NAME} creation failed."
+    fi
+  done
+}
+
+destroy_cluster() {
+  # Destroy and undefine VMs
+  for ((i=1; i<=3; i++)); do
+    VM_NAME="master-${CLUSTER_NAME}-$(printf "%02d" ${i})"
+    virsh destroy ${VM_NAME} &>/dev/null
+    virsh undefine ${VM_NAME} &>/dev/null
+    rm -f /var/lib/libvirt/images/${VM_NAME}.qcow2
+  done
+
+  for ((i=1; i<=WORKERS; i++)); do
+    VM_NAME="worker-${CLUSTER_NAME}-$(printf "%02d" ${i})"
+    virsh destroy ${VM_NAME} &>/dev/null
+    virsh undefine ${VM_NAME} &>/dev/null
+    rm -f /var/lib/libvirt/images/${VM_NAME}.qcow2
+  done
+
+  # Destroy and undefine network
+  virsh net-destroy ${CLUSTER_NAME} &>/dev/null
+  virsh net-undefine ${CLUSTER_NAME} &>/dev/null
+
+  echo "Cluster ${CLUSTER_NAME} destroyed."
+}
+
+if [ "${COMMAND}" == "create" ]; then
+  create_cluster
+elif [ "${COMMAND}" == "destroy" ]; then
+  destroy_cluster
+elif [ "${COMMAND}" == "status" ]; then
+  check_status
+elif [ "${COMMAND}" == "start" ]; then
+  start_vms
+elif [ "${COMMAND}" == "stop" ]; then
+  stop_vms
+elif [ "${COMMAND}" == "attach" ]; then
+  attach_iso
+else
+  usage
+fi
