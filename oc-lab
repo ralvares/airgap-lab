@@ -56,6 +56,9 @@ while [[ "$#" -gt 0 ]]; do
     --attach)
       COMMAND="attach"
       ;;
+    --generate-agentconfig)
+      COMMAND="generate-agentconfig"
+      ;;
     --name|-n)
       CLUSTER_NAME="$2"
       shift
