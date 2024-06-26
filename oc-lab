@@ -327,11 +327,11 @@ destroy_cluster() {
 
 generate_agent_config() {
   local WORKERS=$(virsh list --all --name | grep "worker-" | wc -l)
-  local base_ip_test=$(getent hosts "api.${cluster_name}.${base_domain}" | awk '{ print $1 }')
+  local base_ip_test=$(getent hosts "api.${CLUSTER_NAME}.${DOMAIN_NAME}" | awk '{ print $1 }')
 
   # Check if the base_ip is empty or not resolved
   if [ -z "${base_ip_test}" ]; then
-    echo "Failed to resolve DNS for api.${cluster_name}.${base_domain}. Please verify DNS configuration."
+    echo "Failed to resolve DNS for api.${CLUSTER_NAME}.${DOMAIN_NAME}. Please verify DNS configuration."
     exit 1
   fi
 
