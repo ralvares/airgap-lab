@@ -144,12 +144,14 @@ create_vm() {
   local VM_NAME=$1
   local NET_NAME=$4
   local DISK_PATH="/var/lib/libvirt/images/${VM_NAME}.qcow2"
+  local DISK_PATH_ODF="/var/lib/libvirt/images/${VM_NAME}_odf.qcow2"
   local RAM=$2
   local VCPUS=$3
   local MAC1=$(generate_mac_address)
 
   # Create a disk image
   qemu-img create -f qcow2 ${DISK_PATH} 120G &>/dev/null
+  qemu-img create -f qcow2 ${DISK_PATH_ODF} 1T &>/dev/null
 
   # Define the VM using a direct XML template
   cat <<EOF > ${VM_NAME}.xml
@@ -179,6 +181,11 @@ create_vm() {
       <driver name="qemu" type="qcow2" discard="unmap"/>
       <source file="${DISK_PATH}"/>
       <target dev="sda" bus="scsi"/>
+    </disk>
+    <disk type="file" device="disk">
+      <driver name="qemu" type="qcow2" discard="unmap"/>
+      <source file="${DISK_PATH_ODF}"/>
+      <target dev="sdb" bus="scsi"/>
     </disk>
     <disk type='block' device='cdrom'>
         <driver name='qemu' type='raw'/>
@@ -308,6 +315,7 @@ destroy_cluster() {
     virsh destroy ${VM_NAME} &>/dev/null
     virsh undefine ${VM_NAME} &>/dev/null
     rm -f /var/lib/libvirt/images/${VM_NAME}.qcow2
+    rm -f /var/lib/libvirt/images/${VM_NAME}_odf.qcow2
   done
 
 # Destroy and undefine network
