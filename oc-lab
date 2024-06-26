@@ -302,22 +302,15 @@ create_cluster() {
 }
 
 destroy_cluster() {
+
   # Destroy and undefine VMs
-  for ((i=1; i<=3; i++)); do
-    VM_NAME="master-${CLUSTER_NAME}-$(printf "%02d" ${i})"
+  for VM_NAME in $(virsh list --all --name | grep "${CLUSTER_NAME}-"); do
     virsh destroy ${VM_NAME} &>/dev/null
     virsh undefine ${VM_NAME} &>/dev/null
     rm -f /var/lib/libvirt/images/${VM_NAME}.qcow2
   done
 
-  for ((i=1; i<=WORKERS; i++)); do
-    VM_NAME="worker-${CLUSTER_NAME}-$(printf "%02d" ${i})"
-    virsh destroy ${VM_NAME} &>/dev/null
-    virsh undefine ${VM_NAME} &>/dev/null
-    rm -f /var/lib/libvirt/images/${VM_NAME}.qcow2
-  done
-
-  # Destroy and undefine network
+# Destroy and undefine network
   virsh net-destroy ${CLUSTER_NAME} &>/dev/null
   virsh net-undefine ${CLUSTER_NAME} &>/dev/null
 
