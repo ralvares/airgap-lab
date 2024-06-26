@@ -1,1 +1,225 @@
-
+apiVersion: v1alpha1
+kind: AgentConfig
+metadata:
+  name: ocp
+additionalNTPSources:
+- 10.101.194.1
+- 10.101.194.2
+rendezvousIP: 10.101.194.20
+hosts:
+- hostname: master1
+  role: master
+  interfaces:
+  - macAddress: 52:54:00:2d:3c:08
+    name: enp1s0
+  networkConfig:
+    dns-resolver:
+      config:
+        server:
+        - 10.101.194.1
+    interfaces:
+    - ipv4:
+        address:
+        - ip: 10.101.194.20
+          prefix-length: 24
+        dhcp: false
+        enabled: true
+      mac-address: 52:54:00:2d:3c:08
+      name: enp1s0
+      state: up
+      type: ethernet
+    routes:
+      config:
+      - destination: 0.0.0.0/0
+        next-hop-address: 10.101.194.1
+        next-hop-interface: enp1s0
+        table-id: 254
+- hostname: master2
+  role: master
+  interfaces:
+  - macAddress: 52:54:00:00:ea:4c
+    name: enp1s0
+  networkConfig:
+    dns-resolver:
+      config:
+        server:
+        - 10.101.194.1
+    interfaces:
+    - ipv4:
+        address:
+        - ip: 10.101.194.21
+          prefix-length: 24
+        dhcp: false
+        enabled: true
+      mac-address: 52:54:00:00:ea:4c
+      name: enp1s0
+      state: up
+      type: ethernet
+    routes:
+      config:
+      - destination: 0.0.0.0/0
+        next-hop-address: 10.101.194.1
+        next-hop-interface: enp1s0
+        table-id: 254
+- hostname: master3
+  role: master
+  interfaces:
+  - macAddress: 52:54:00:43:e6:d2
+    name: enp1s0
+  networkConfig:
+    dns-resolver:
+      config:
+        server:
+        - 10.101.194.1
+    interfaces:
+    - ipv4:
+        address:
+        - ip: 10.101.194.22
+          prefix-length: 24
+        dhcp: false
+        enabled: true
+      mac-address: 52:54:00:43:e6:d2
+      name: enp1s0
+      state: up
+      type: ethernet
+    routes:
+      config:
+      - destination: 0.0.0.0/0
+        next-hop-address: 10.101.194.1
+        next-hop-interface: enp1s0
+        table-id: 254
+- hostname: worker1
+  role: worker
+  interfaces:
+  - macAddress: 52:54:00:04:9f:04
+    name: enp1s0
+  networkConfig:
+    dns-resolver:
+      config:
+        server:
+        - 10.101.194.1
+    interfaces:
+    - ipv4:
+        address:
+        - ip: 10.101.194.30
+          prefix-length: 24
+        dhcp: false
+        enabled: true
+      mac-address: 52:54:00:04:9f:04
+      name: enp1s0
+      state: up
+      type: ethernet
+    routes:
+      config:
+      - destination: 0.0.0.0/0
+        next-hop-address: 10.101.194.1
+        next-hop-interface: enp1s0
+        table-id: 254
+- hostname: worker2
+  role: worker
+  interfaces:
+  - macAddress: 52:54:00:8d:72:81
+    name: enp1s0
+  networkConfig:
+    dns-resolver:
+      config:
+        server:
+        - 10.101.194.1
+    interfaces:
+    - ipv4:
+        address:
+        - ip: 10.101.194.31
+          prefix-length: 24
+        dhcp: false
+        enabled: true
+      mac-address: 52:54:00:8d:72:81
+      name: enp1s0
+      state: up
+      type: ethernet
+    routes:
+      config:
+      - destination: 0.0.0.0/0
+        next-hop-address: 10.101.194.1
+        next-hop-interface: enp1s0
+        table-id: 254
+- hostname: worker3
+  role: worker
+  interfaces:
+  - macAddress: 52:54:00:ab:2d:55
+    name: enp1s0
+  networkConfig:
+    dns-resolver:
+      config:
+        server:
+        - 10.101.194.1
+    interfaces:
+    - ipv4:
+        address:
+        - ip: 10.101.194.32
+          prefix-length: 24
+        dhcp: false
+        enabled: true
+      mac-address: 52:54:00:ab:2d:55
+      name: enp1s0
+      state: up
+      type: ethernet
+    routes:
+      config:
+      - destination: 0.0.0.0/0
+        next-hop-address: 10.101.194.1
+        next-hop-interface: enp1s0
+        table-id: 254
+- hostname: worker4
+  role: worker
+  interfaces:
+  - macAddress: 52:54:00:26:15:d9
+    name: enp1s0
+  networkConfig:
+    dns-resolver:
+      config:
+        server:
+        - 10.101.194.1
+    interfaces:
+    - ipv4:
+        address:
+        - ip: 10.101.194.33
+          prefix-length: 24
+        dhcp: false
+        enabled: true
+      mac-address: 52:54:00:26:15:d9
+      name: enp1s0
+      state: up
+      type: ethernet
+    routes:
+      config:
+      - destination: 0.0.0.0/0
+        next-hop-address: 10.101.194.1
+        next-hop-interface: enp1s0
+        table-id: 254
+- hostname: worker5
+  role: worker
+  interfaces:
+  - macAddress: 52:54:00:c2:c4:c8
+    name: enp1s0
+  networkConfig:
+    dns-resolver:
+      config:
+        server:
+        - 10.101.194.1
+    interfaces:
+    - ipv4:
+        address:
+        - ip: 10.101.194.34
+          prefix-length: 24
+        dhcp: false
+        enabled: true
+      mac-address: 52:54:00:c2:c4:c8
+      name: enp1s0
+      state: up
+      type: ethernet
+    routes:
+      config:
+      - destination: 0.0.0.0/0
+        next-hop-address: 10.101.194.1
+        next-hop-interface: enp1s0
+        table-id: 254
