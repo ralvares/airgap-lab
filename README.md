@@ -25,6 +25,8 @@ oc lab --command --name <name_of_cluster> [options]
 - `--start`: Start all the VMs.
 - `--stop`: Stop all the VMs.
 - `--attach`: Attach an ISO image to all the VMs.
+- `--generate-agentconfig`: Generate AgentConfig for the cluster"
+- `--generate-installconfig`: Generate InstallConfig for the cluster"
 
 ### Options
 
@@ -58,7 +60,16 @@ oc lab --command --name <name_of_cluster> [options]
    oc lab -n ocp --create --domain customdomain.com
    ```
 
-2. **Attach an ISO Image**
+2. **Generate AgentConfig and InstallConfig**
+
+  To Generate the agent-config.yaml and install-config.yaml to the `ocp` cluster:
+  
+ ```bash
+   oc lab -n ocp --generate-installconfig > install-config.yaml
+   oc lab -n ocp --generate-agentconfig > agent-config.yaml
+ ```
+
+4. **Attach an ISO Image**
 
    To attach an ISO image to all VMs in the cluster named `ocp`:
 
