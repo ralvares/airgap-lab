@@ -62,14 +62,14 @@ oc lab --command --name <name_of_cluster> [options]
 
 2. **Generate AgentConfig and InstallConfig**
 
-  To Generate the agent-config.yaml and install-config.yaml to the `ocp` cluster:
+   To Generate the agent-config.yaml and install-config.yaml to the `ocp` cluster:
   
- ```bash
-   oc lab -n ocp --generate-installconfig > install-config.yaml
-   oc lab -n ocp --generate-agentconfig > agent-config.yaml
- ```
+  ```bash
+  oc lab -n ocp --generate-installconfig > install-config.yaml
+  oc lab -n ocp --generate-agentconfig > agent-config.yaml
+  ```
 
-4. **Attach an ISO Image**
+3. **Attach an ISO Image**
 
    To attach an ISO image to all VMs in the cluster named `ocp`:
 
@@ -77,7 +77,7 @@ oc lab --command --name <name_of_cluster> [options]
    oc lab -n ocp --attach --iso /path/to/iso
    ```
 
-3. **Start All VMs**
+4. **Start All VMs**
 
    To start all VMs in the cluster named `ocp`:
 
@@ -85,7 +85,7 @@ oc lab --command --name <name_of_cluster> [options]
    oc lab -n ocp --start
    ```
 
-4. **Check the Status of VMs**
+5. **Check the Status of VMs**
 
    To check the status of VMs in the cluster named `ocp`:
 
