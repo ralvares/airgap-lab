@@ -318,6 +318,7 @@ destroy_cluster() {
 }
 
 generate_agent_config() {
+  local WORKERS=$(virsh list --all --name | grep "worker-" | wc -l)
   local base_ip_test=$(getent hosts "api.${cluster_name}.${base_domain}" | awk '{ print $1 }')
 
   # Check if the base_ip is empty or not resolved
@@ -406,7 +407,7 @@ generate_install_config() {
     echo "SSL_CERT_DIR is not set. Please set the SSL_CERT_DIR environment variable to the directory containing your Quay certificates."
     exit 1
   fi
-
+  local WORKERS=$(virsh list --all --name | grep "worker-" | wc -l)
   local base_domain=${DOMAIN_NAME}
   local cluster_name=${CLUSTER_NAME}
   local api_vip=$(getent hosts "api.${cluster_name}.${base_domain}" | awk '{ print $1 }')
