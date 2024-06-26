@@ -1,1 +1,67 @@
-
+apiVersion: v1
+baseDomain: superdemo.live
+metadata:
+  name: ocp
+networking:
+  clusterNetwork:
+  - cidr: 10.128.0.0/14
+    hostPrefix: 23
+  machineNetwork:
+  - cidr: 10.101.194.0/24
+  networkType: OVNKubernetes
+  serviceNetwork:
+  - 172.30.0.0/16
+compute:
+  - architecture: amd64
+    hyperthreading: Enabled
+    name: worker
+    replicas: 5
+controlPlane:
+  architecture: amd64
+  hyperthreading: Enabled
+  name: master
+  replicas: 3
+platform:
+  baremetal:
+    hosts:
+    - name: master1
+      role: master
+      bootMACAddress: 52:54:00:2d:3c:08
+    - name: master2
+      role: master
+      bootMACAddress: 52:54:00:00:ea:4c
+    - name: master3
+      role: master
+      bootMACAddress: 52:54:00:43:e6:d2
+    - name: worker1
+      role: worker
+      bootMACAddress: 52:54:00:04:9f:04
+    - name: worker2
+      role: worker
+      bootMACAddress: 52:54:00:8d:72:81
+    - name: worker3
+      role: worker
+      bootMACAddress: 52:54:00:ab:2d:55
+    - name: worker4
+      role: worker
+      bootMACAddress: 52:54:00:26:15:d9
+    - name: worker5
+      role: worker
+      bootMACAddress: 52:54:00:c2:c4:c8
+    apiVIPs:
+    - 10.101.194.5
+    ingressVIPs:
+    - 10.101.194.10
+fips: false
+pullSecret: '{...}'
+imageContentSources:
+- mirrors:
+  - quay.ocp.superdemo.live:8443/openshift/release
+  source: quay.io/openshift-release-dev/ocp-v4.0-art-dev
+- mirrors:
+  - quay.ocp.superdemo.live:8443/openshift/release-images
+  source: quay.io/openshift-release-dev/ocp-release
+additionalTrustBundle: |
+    -----BEGIN CERTIFICATE-----
+    ...
+    -----END CERTIFICATE-----
