@@ -277,7 +277,7 @@ create_cluster() {
   # Create worker VMs 4194304
   for ((i=1; i<=WORKERS; i++)); do
     VM_NAME="worker-${CLUSTER_NAME}-$(printf "%02d" ${i})"
-    create_vm ${VM_NAME} 8388608 4 ${CLUSTER_NAME}
+    create_vm ${VM_NAME} 16777216 6 ${CLUSTER_NAME}
   done
 
   echo "Cluster Name: ${CLUSTER_NAME}"
