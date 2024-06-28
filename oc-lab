@@ -26,6 +26,7 @@ usage() {
   echo "  --workers             Number of worker nodes (default is 2)"
   echo "  --airgap              Disconnect the network from the internet (default is connected)"
   echo "  --iso                 Path to the ISO image (required for --attach)"
+  echo "  --type                Type of cluster (compact or virtualisation)"
   exit 1
 }
 
@@ -36,6 +37,7 @@ COMMAND=""
 CLUSTER_NAME=""
 ISO_PATH=""
 DOMAIN_NAME="superdemo.live"
+TYPE=""
 
 # Parse command-line arguments
 while [[ "$#" -gt 0 ]]; do
@@ -83,6 +85,9 @@ while [[ "$#" -gt 0 ]]; do
       ISO_PATH="$2"
       shift
       ;;
+    --type)
+      TYPE="$2"
+      shift
     *)
       usage
       ;;
@@ -254,6 +259,19 @@ check_status() {
 }
 
 create_cluster() {
+
+  # Handle different types
+  if [ "${TYPE}" == "compact" ]; then
+    WORKERS=0
+  elif [ "${TYPE}" == "virtualisation" ]; then
+    WORKERS=0
+    MASTER_RAM=33554432  # 32 GB
+    MASTER_VCPUS=8
+  else
+    MASTER_RAM=16777216  # 16 GB
+    MASTER_VCPUS=4
+  fi
+  
   # Generate and define the network XML
   NETWORK_XML=$(generate_network_xml ${CLUSTER_NAME} ${DOMAIN_NAME})
   echo "${NETWORK_XML}" | virsh net-define /dev/stdin &>/dev/null
@@ -271,13 +289,13 @@ create_cluster() {
   # Create master VMs
   for ((i=1; i<=3; i++)); do
     VM_NAME="master-${CLUSTER_NAME}-$(printf "%02d" ${i})"
-    create_vm ${VM_NAME} 16777216 4 ${CLUSTER_NAME}
+    create_vm ${VM_NAME} ${MASTER_RAM} ${MASTER_VCPUS} ${CLUSTER_NAME}
   done
 
-  # Create worker VMs 4194304
+  # Create worker VMs
   for ((i=1; i<=WORKERS; i++)); do
     VM_NAME="worker-${CLUSTER_NAME}-$(printf "%02d" ${i})"
-    create_vm ${VM_NAME} 16777216 6 ${CLUSTER_NAME}
+    create_vm ${VM_NAME} 8388608 2 ${CLUSTER_NAME}
   done
 
   echo "Cluster Name: ${CLUSTER_NAME}"
