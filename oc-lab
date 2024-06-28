@@ -26,7 +26,7 @@ usage() {
   echo "  --workers             Number of worker nodes (default is 2)"
   echo "  --airgap              Disconnect the network from the internet (default is connected)"
   echo "  --iso                 Path to the ISO image (required for --attach)"
-  echo "  --type                Type of cluster (compact or virtualisation)"
+  echo "  --type                Type of cluster (compact or virt)"
   exit 1
 }
 
@@ -264,7 +264,9 @@ create_cluster() {
   # Handle different types
   if [ "${TYPE}" == "compact" ]; then
     WORKERS=0
-  elif [ "${TYPE}" == "virtualisation" ]; then
+    MASTER_RAM=16777216  # 16 GB
+    MASTER_VCPUS=4
+  elif [ "${TYPE}" == "virt" ]; then
     WORKERS=0
     MASTER_RAM=33554432  # 32 GB
     MASTER_VCPUS=8
