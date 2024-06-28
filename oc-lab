@@ -88,6 +88,7 @@ while [[ "$#" -gt 0 ]]; do
     --type)
       TYPE="$2"
       shift
+      ;;
     *)
       usage
       ;;
