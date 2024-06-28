@@ -32,7 +32,6 @@ metadata:
   name: ocs-storagecluster
   namespace: openshift-storage
 spec:
-spec:
   resources:
     mds:
       requests:
