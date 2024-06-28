@@ -35,6 +35,9 @@ oc lab --command --name <name_of_cluster> [options]
 - `--airgap`: Disconnect the network from the internet (default is connected).
 - `--iso <path_to_iso>`: Path to the ISO image (required for `--attach`).
 - `--domain, -d <domain_name>`: Domain name (default is `superdemo.live`).
+- `--type`: Type of cluster (`compact` or `virt`) OPTIONAL
+
+Cluster Types: compact memory->16GB, CPU->4 - virt memory->32GB, CPU->8.
 
 ## Examples
 
