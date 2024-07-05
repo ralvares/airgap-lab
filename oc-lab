@@ -433,8 +433,12 @@ generate_agent_config() {
 
 generate_install_config() {
   if [ -z "$SSL_CERT_DIR" ]; then
-    echo "SSL_CERT_DIR is not set. Please set the SSL_CERT_DIR environment variable to the directory containing your Quay certificates."
-    exit 1
+    forward_mode=$(virsh net-dumpxml "${CLUSTER_NAME}" | grep -oP "(?<=<forward mode=')[^']+")
+    # Check if the forward mode is 'route'
+    if [ "$forward_mode" = "route" ]; then
+        echo "It is an AIRGAP Cluster, SSL_CERT_DIR is not set. Please set the SSL_CERT_DIR environment variable to the directory containing your Quay certificates." >&2
+        exit 1
+    fi
   fi
   local WORKERS=$(virsh list --all --name | grep "worker-" | wc -l)
   local base_domain=${DOMAIN_NAME}
@@ -496,15 +500,17 @@ generate_install_config() {
   echo "    - ${ingress_vip}"
   echo "fips: false"
   echo "pullSecret: '${pull_secret}'"
-  echo "imageContentSources:"
-  echo "- mirrors:"
-  echo "  - quay.${cluster_name}.${base_domain}:8443/openshift/release"
-  echo "  source: quay.io/openshift-release-dev/ocp-v4.0-art-dev"
-  echo "- mirrors:"
-  echo "  - quay.${cluster_name}.${base_domain}:8443/openshift/release-images"
-  echo "  source: quay.io/openshift-release-dev/ocp-release"
-  echo "additionalTrustBundle: |"
-  echo "${trust_bundle}"
+  if [ "$is_airgap" = true ]; then
+    echo "imageContentSources:"
+    echo "- mirrors:"
+    echo "  - quay.${cluster_name}.${base_domain}:8443/openshift/release"
+    echo "  source: quay.io/openshift-release-dev/ocp-v4.0-art-dev"
+    echo "- mirrors:"
+    echo "  - quay.${cluster_name}.${base_domain}:8443/openshift/release-images"
+    echo "  source: quay.io/openshift-release-dev/ocp-release"
+    echo "additionalTrustBundle: |"
+    echo "${trust_bundle}"
+  fi
 }
 
 if [ "${COMMAND}" == "create" ]; then
