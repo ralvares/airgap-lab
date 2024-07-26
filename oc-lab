@@ -332,7 +332,7 @@ create_cluster() {
 destroy_cluster() {
 
   # Destroy and undefine VMs
-  for VM_NAME in $(virsh list --all --name | grep "${CLUSTER_NAME}-"); do
+  for VM_NAME in $(virsh list --all --name | grep -E "^(master|worker)-${CLUSTER_NAME}-"); do
     virsh destroy ${VM_NAME} &>/dev/null
     virsh undefine ${VM_NAME} &>/dev/null
     rm -f /var/lib/libvirt/images/${VM_NAME}.qcow2
