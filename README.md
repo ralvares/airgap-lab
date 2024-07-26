@@ -77,7 +77,9 @@ Cluster Types: compact memory->16GB, CPU->4 - virt memory->32GB, CPU->8.
    To attach an ISO image to all VMs in the cluster named `ocp`:
 
    ```bash
-   oc lab -n ocp --attach --iso /path/to/iso
+   openshift-install agent create image --dir .
+   cp -rf coreos-x86_64.iso /path/to/iso/coreos-x86_64.iso
+   oc lab -n ocp --attach --iso /path/to/iso/coreos-x86_64.iso
    ```
 
 4. **Start All VMs**
