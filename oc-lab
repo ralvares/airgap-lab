@@ -453,7 +453,9 @@ generate_install_config() {
 
   local ingress_vip=$(getent hosts "demo.apps.${cluster_name}.${base_domain}" | awk '{ print $1 }')
   local pull_secret=$(jq -c . $HOME/pull-secret.txt)
-  local trust_bundle=$(cat ${SSL_CERT_DIR}/rootCA.pem | sed 's/^/    /')
+  if [ "$is_airgap" = true ]; then
+    local trust_bundle=$(cat ${SSL_CERT_DIR}/rootCA.pem | sed 's/^/    /')
+  fi
   local machine_network_cidr=$(echo "${api_vip}" | awk -F '.' '{print $1"."$2"."$3".0/24"}')
 
   echo "apiVersion: v1"
