@@ -6,12 +6,7 @@ Here's a comprehensive step-by-step guide on configuring `firewalld` to use a cu
    sudo firewall-cmd --permanent --new-zone=restricted
    ```
 
-2. Assign the `ocp` interface to the `restricted` zone:
-   ```bash
-   sudo firewall-cmd --permanent --zone=restricted --add-interface=ocp
-   ```
-
-3. Set the default target of the `restricted` zone to `DROP` to block all traffic by default:
+2. Set the default target of the `restricted` zone to `DROP` to block all traffic by default:
    ```bash
    sudo firewall-cmd --permanent --zone=restricted --set-target=DROP
    ```
