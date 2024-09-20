@@ -14,7 +14,7 @@ Here's a comprehensive step-by-step guide on configuring `firewalld` to use a cu
 ### Step 2: Allow Specific Services
 1. Allow essential services like DHCP, DNS, HTTP, HTTPS, SSH, and TFTP in the `restricted` zone:
    ```bash
-   sudo firewall-cmd --permanent --zone=restricted --add-service={dhcp,dns,http,https,ssh,tftp}
+   sudo firewall-cmd --permanent --zone=restricted --add-service={dhcp,dns,http,https,ssh,tftp,nfs,nfs3,mountd,rpc-bind}
    ```
 
 ### Step 3: Allow Specific TCP and UDP Ports
