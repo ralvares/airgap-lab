@@ -109,15 +109,17 @@ generate_network_xml() {
   local cluster_name=$1
   local domain=$2
   local forward_mode="nat"
+  local zone="libvirt" 
 
   if [ "${AIRGAP}" == "true" ]; then
     forward_mode="route"
+    zone="restricted"
   fi
 
   cat <<EOF
 <network xmlns:dnsmasq='http://libvirt.org/schemas/network/dnsmasq/1.0'>
   <name>${cluster_name}</name>
-  <bridge name='${cluster_name}' stp='on' delay='0'/>
+  <bridge name='${cluster_name}' zone='${zone}' stp='on' delay='0'/>
   <forward mode='${forward_mode}'/>
   <domain name='${domain}' localOnly='yes'/>
   <dns>
